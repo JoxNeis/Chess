@@ -1,52 +1,75 @@
 import Piece from "./Piece.js";
-import Board from "../Board.js";
-import Square from "../Square.js";
 
 class Pawn extends Piece {
-    //#region CONSTRUCTOR
+
     constructor(color) {
         super(color, "P");
     }
-    //#endregion
 
-    //#region UTILS
     getPossibleMoves(board, row, col) {
-        moves = [];
-        moves.push(this._forwardMoves(board, row, col));
-        moves.push(this._diagonalMoves(board, row, col));
-        moves.push(this._enPassantMoves(board, row, col));
+        let moves = [];
+        moves.push(...this._forwardMoves(board, row, col));
+        moves.push(...this._diagonalMoves(board, row, col));
+        moves.push(...this._enPassantMoves(board, row, col));
         return moves;
     }
 
     _forwardMoves(board, row, col) {
-        moves = [];
-        if (row == 2) {
-            moves.push(board.getSquare(4, col));
+        let moves = [];
+        const dir = this.color === "white" ? -1 : 1;
+        const startRow = this.color === "white" ? 6 : 1;
+
+        const oneStep = board.getSquare(row + dir, col);
+        if (oneStep && !oneStep.piece) {
+            moves.push(oneStep);
+            if (row === startRow) {
+                const twoStep = board.getSquare(row + 2 * dir, col);
+                if (twoStep && !twoStep.piece) {
+                    moves.push(twoStep);
+                }
+            }
         }
-        moves.push(board.getSquare(row + 1, col));
         return moves;
     }
 
     _diagonalMoves(board, row, col) {
-        moves = [];
-        digRight = board.getSquare(row+1,col+1);
-        if(digRight != null && digRight.isEnemy()){
-            moves.push(digRight);
-        }
-        digLeft = board.getSquare(row+1,col-1);
-        if(digLeft != null && digLeft.isEnemy()){
-            moves.push(digLeft);
+        let moves = [];
+        const dir = this.color === "white" ? -1 : 1;
+
+        for (const dcol of [-1, 1]) {
+            const sq = board.getSquare(row + dir, col + dcol);
+            if (sq && sq.piece && sq.piece.color !== this.color) {
+                moves.push(sq);
+            }
         }
         return moves;
     }
 
     _enPassantMoves(board, row, col) {
+        let moves = [];
+        const dir = this.color === "white" ? -1 : 1;
+        const enPassantRow = this.color === "white" ? 3 : 4;
 
+        if (row !== enPassantRow) return moves;
+
+        for (const dcol of [-1, 1]) {
+            const adjacent = board.getSquare(row, col + dcol);
+            if (
+                adjacent &&
+                adjacent.piece &&
+                adjacent.piece.color !== this.color &&
+                adjacent.piece.code === "P" &&
+                adjacent.piece === board.lastDoubleStepPawn
+            ) {
+                moves.push(board.getSquare(row + dir, col + dcol));
+            }
+        }
+        return moves;
     }
 
-    _upgradePiece(board, row, col) {
-
+    getPromotionPieces() {
+        return ["Q", "R", "B", "N"];
     }
-    //#endregion
+}
 
-} export default Piece;
+export default Pawn;

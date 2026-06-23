@@ -44,7 +44,7 @@ class Square {
     }
 
     isEnemy(color){
-        return this.piece.color != this.color;
+        return this.piece.color != color;
     }
     //#endregion
 }
